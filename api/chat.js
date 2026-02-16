@@ -1,7 +1,7 @@
 // Vercel Serverless Function - API代理
 // 将前端请求转发到阿里云百炼API，密钥存在环境变量中
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
     // CORS headers
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');

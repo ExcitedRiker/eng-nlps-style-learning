@@ -1,7 +1,7 @@
 // ============ 英语结构化学习模块 ============
 // 阿里云百炼 API 配置
 const ALIYUN_API_CONFIG = {
-    apiKey: 'REDACTED_KEY',
+    apiKey: '',  // 密钥已移至Vercel环境变量，通过/api/chat代理访问
     model: 'qwen3-next-80b-a3b-instruct',
     endpoint: 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions'
 };

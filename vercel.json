@@ -1,5 +1,6 @@
 {
   "rewrites": [
+    { "source": "/", "destination": "/语料库式结构学作文_v2.html" },
     { "source": "/api/chat", "destination": "/api/chat" }
   ],
   "headers": [

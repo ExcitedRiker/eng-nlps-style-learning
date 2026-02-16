@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>知兰玉数 V2 - 结构化学习系统</title>
+    <!-- 外部库 CDN 加载 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- 使用V1的CSS -->
+    <link rel="stylesheet" href="english-learning.css">
+    <link rel="stylesheet" href="liquid-glass.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ============ V2 特有样式 ============ */
+        
+        /* ============ AI聊天界面样式 - 新手模式 ============ */
+        .v2-chat-container {
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            overflow: hidden;
+            min-height: 550px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .v2-chat-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 20px 25px;
+            background: linear-gradient(135deg, rgba(139, 38, 68, 0.7), rgba(89, 18, 42, 0.8));
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .v2-chat-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+        }
+
+        .v2-chat-info .chat-name {
+            font-size: 17px;
+            font-weight: 600;
+            color: white;
+        }
+
+        .v2-chat-info .chat-status {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .v2-chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            max-height: 400px;
+            min-height: 300px;
+        }
+
+        .v2-chat-message {
+            display: flex;
+            gap: 14px;
+            animation: v2MessageSlideIn 0.4s ease;
+        }
+
+        @keyframes v2MessageSlideIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .v2-chat-message.user {
+            flex-direction: row-reverse;
+        }
+
+        .v2-chat-message .message-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .v2-chat-message.assistant .message-avatar {
+            background: linear-gradient(135deg, rgba(139, 38, 68, 0.8), rgba(109, 28, 52, 0.9));
+        }
+
+        .v2-message-bubble {
+            max-width: 75%;
+        }
+
+        .v2-message-content {
+            padding: 16px 20px;
+            border-radius: 20px;
+            font-size: 15px;
+            line-height: 1.8;
+        }
+
+        .v2-chat-message.assistant .v2-message-content {
+            background: rgba(255, 255, 255, 0.08);
+            color: rgba(255, 255, 255, 0.9);
+            border-bottom-left-radius: 6px;
+        }
+
+        .v2-chat-message.user .v2-message-content {
+            background: linear-gradient(135deg, rgba(139, 38, 68, 0.85), rgba(109, 28, 52, 0.9));
+            color: white;
+            border-bottom-right-radius: 6px;
+        }
+
+        .v2-message-content strong {
+            color: #ffd700;
+        }
+
+        .v2-message-time {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.4);
+            margin-top: 6px;
+            padding: 0 5px;
+        }
+
+        .v2-chat-message.user .v2-message-time {
+            text-align: right;
+        }
+
+        .v2-chat-input-container {
+            padding: 20px 25px;
+            background: rgba(255, 255, 255, 0.03);
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .v2-quick-actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .v2-quick-btn {
+            padding: 10px 18px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 25px;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .v2-quick-btn:hover {
+            background: rgba(139, 38, 68, 0.4);
+            border-color: rgba(139, 38, 68, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .v2-input-row {
+            display: flex;
+            gap: 12px;
+        }
+
+        .v2-input-row textarea {
+            flex: 1;
+            padding: 15px 22px;
+            background: rgba(255, 255, 255, 0.06) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            border-radius: 28px;
+            color: white !important;
+            font-size: 15px;
+            resize: none;
+            min-height: 52px;
+            max-height: 120px;
+            font-family: inherit;
+        }
+
+        .v2-input-row textarea::placeholder {
+            color: rgba(255, 255, 255, 0.4) !important;
+        }
+
+        .v2-send-btn {
+            padding: 15px 32px;
+            background: linear-gradient(135deg, rgb(139, 38, 68), rgb(109, 28, 52));
+            border: none;
+            border-radius: 28px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 15px;
+        }
+
+        .v2-send-btn:hover:not(:disabled) {
+            transform: scale(1.05);
+            box-shadow: 0 8px 25px rgba(139, 38, 68, 0.4);
+        }
+
+        .v2-send-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* 标签参考卡片 */
+        .v2-tags-reference {
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .v2-tags-reference h4 {
+            font-size: 15px;
+            color: rgba(255, 200, 180, 0.9);
+            margin-bottom: 18px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .v2-tags-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .v2-tags-section h5 {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .v2-tags-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        /* 打字光标 */
+        .v2-typing-cursor {
+            display: inline-block;
+            color: rgba(200, 90, 120, 0.9);
+            animation: v2Blink 0.8s infinite;
+            font-weight: 300;
+            margin-left: 2px;
+        }
+
+        @keyframes v2Blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        .v2-loading-dots {
+            animation: v2LoadingPulse 1s ease-in-out infinite;
+        }
+
+        @keyframes v2LoadingPulse {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 1; }
+        }
+
+        /* Toast消息 */
+        .v2-toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            padding: 16px 32px;
+            border-radius: 30px;
+            font-size: 14px;
+            font-weight: 500;
+            z-index: 10000;
+            opacity: 0;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .v2-toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        .v2-toast.success {
+            background: linear-gradient(135deg, rgba(40, 167, 69, 0.9), rgba(32, 201, 151, 0.9));
+            color: white;
+        }
+
+        .v2-toast.error {
+            background: linear-gradient(135deg, rgba(220, 53, 69, 0.9), rgba(232, 62, 140, 0.9));
+            color: white;
+        }
+
+        /* ============ 主题切换按钮样式 ============ */
+        .v2-theme-toggle {
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.1) !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+            border-radius: 20px !important;
+            padding: 6px 16px !important;
+            font-size: 13px !important;
+            transition: all 0.3s ease !important;
+        }
+        .v2-theme-toggle:hover {
+            background: rgba(255, 255, 255, 0.2) !important;
+        }
+
+        /* ============ 浅色模式 - V2组件覆盖 ============ */
+
+        /* 聊天容器 */
+        [data-theme="light"] .v2-chat-container {
+            background: rgba(255, 255, 255, 0.85);
+            border-color: rgba(0, 0, 0, 0.1);
+        }
+
+        /* 聊天头部 - 保持品牌色 */
+        [data-theme="light"] .v2-chat-header {
+            background: linear-gradient(135deg, rgba(139, 38, 68, 0.9), rgba(89, 18, 42, 0.95));
+        }
+
+        /* 聊天消息区域 */
+        [data-theme="light"] .v2-chat-messages {
+            background: rgba(248, 245, 246, 0.6);
+        }
+
+        /* AI消息气泡 */
+        [data-theme="light"] .v2-chat-message.assistant .v2-message-content {
+            background: rgba(0, 0, 0, 0.05);
+            color: #333;
+        }
+
+        /* 用户消息气泡 - 保持品牌色 */
+        [data-theme="light"] .v2-chat-message.user .v2-message-content {
+            background: linear-gradient(135deg, rgba(139, 38, 68, 0.9), rgba(109, 28, 52, 0.95));
+            color: white;
+        }
+
+        /* 消息中的加粗文字 */
+        [data-theme="light"] .v2-chat-message.assistant .v2-message-content strong {
+            color: rgb(139, 38, 68);
+        }
+
+        /* 消息头像 */
+        [data-theme="light"] .v2-chat-message .message-avatar {
+            background: rgba(0, 0, 0, 0.06);
+        }
+        [data-theme="light"] .v2-chat-message.assistant .message-avatar {
+            background: linear-gradient(135deg, rgba(139, 38, 68, 0.85), rgba(109, 28, 52, 0.95));
+        }
+
+        /* 消息时间 */
+        [data-theme="light"] .v2-message-time {
+            color: rgba(0, 0, 0, 0.4);
+        }
+
+        /* 输入区域 */
+        [data-theme="light"] .v2-chat-input-container {
+            background: rgba(255, 255, 255, 0.7);
+            border-top-color: rgba(0, 0, 0, 0.08);
+        }
+
+        /* 快捷按钮 */
+        [data-theme="light"] .v2-quick-btn {
+            background: rgba(139, 38, 68, 0.06);
+            border-color: rgba(139, 38, 68, 0.15);
+            color: rgb(109, 28, 52);
+        }
+        [data-theme="light"] .v2-quick-btn:hover {
+            background: rgba(139, 38, 68, 0.15);
+            border-color: rgba(139, 38, 68, 0.3);
+        }
+
+        /* 输入框 */
+        [data-theme="light"] .v2-input-row textarea {
+            background: rgba(255, 255, 255, 0.95) !important;
+            border-color: rgba(0, 0, 0, 0.12) !important;
+            color: #333 !important;
+        }
+        [data-theme="light"] .v2-input-row textarea::placeholder {
+            color: rgba(0, 0, 0, 0.4) !important;
+        }
+
+        /* 发送按钮 - 保持品牌色 */
+        [data-theme="light"] .v2-send-btn {
+            background: linear-gradient(135deg, rgb(139, 38, 68), rgb(109, 28, 52));
+            color: white;
+        }
+
+        /* 标签参考卡片 */
+        [data-theme="light"] .v2-tags-reference {
+            background: rgba(255, 255, 255, 0.85);
+            border-color: rgba(0, 0, 0, 0.08);
+        }
+        [data-theme="light"] .v2-tags-reference h4 {
+            color: rgb(139, 38, 68);
+        }
+        [data-theme="light"] .v2-tags-section h5 {
+            color: rgba(0, 0, 0, 0.5);
+        }
+
+        /* 打字光标 */
+        [data-theme="light"] .v2-typing-cursor {
+            color: rgb(139, 38, 68);
+        }
+
+        /* Toast消息 - 保持原样，已经是彩色背景 */
+
+        /* feature-header/body 内文字 */
+        [data-theme="light"] .feature-body p,
+        [data-theme="light"] .feature-body span,
+        [data-theme="light"] .feature-body label {
+            color: #444;
+        }
+
+        /* 页脚浅色模式 */
+        [data-theme="light"] .footer-inner .logo-title {
+            color: rgba(255, 255, 255, 0.9) !important;
+        }
+
+        /* 响应式 */
+        @media (max-width: 1000px) {
+            .v2-tags-grid {
+                grid-template-columns: 1fr;
+            }
+            .v2-mode-selector {
+                flex-direction: column;
+            }
+            .v2-mode-btn {
+                min-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body data-theme="dark">
+    <!-- 头部 -->
+    <header class="header">
+        <div class="header-main">
+            <div class="logo-section">
+                <div class="logo-text">
+                    <span class="logo-title">知兰玉数</span>
+                    <span class="logo-subtitle">ZHILAN YUSHU · INTELLIGENT LANGUAGE PLATFORM</span>
+                </div>
+            </div>
+            <nav class="nav-menu">
+                <a class="nav-item active" data-tab="learning">V2 学习系统</a>
+                <a class="nav-item" href="语料库式结构学作文.html">返回V1</a>
+                <!-- 主题切换按钮 -->
+                <button class="nav-item v2-theme-toggle" id="themeToggleBtn" onclick="toggleTheme()">
+                    🌙 深色
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- 主内容 -->
+    <main class="main-container">
+        <!-- 左侧边栏 - 和V1一样 -->
+        <aside class="sidebar">
+            <!-- 迎新系统推广卡片 -->
+            <div class="sidebar-promo">
+                <div class="sidebar-promo-icon">
+                    <span class="icon-title">V2.0</span>
+                    <span class="icon-main">结构化学习</span>
+                </div>
+                <div class="sidebar-promo-content">
+                    <h3>三大学习模式</h3>
+                    <a class="sidebar-promo-btn" onclick="switchMode('beginner')">开始学习</a>
+                </div>
+            </div>
+            
+            <!-- 搜索框 -->
+            <div class="sidebar-search">
+                <div class="sidebar-search-wrapper">
+                    <input type="text" placeholder="快速探访知兰玉数平台">
+                    <button>🔍</button>
+                </div>
+            </div>
+            
+            <!-- 快捷链接 - 两列布局 -->
+            <div class="sidebar-links">
+                <a class="sidebar-link" onclick="switchMode('beginner')">📚 新手学习</a>
+                <a class="sidebar-link" onclick="switchMode('practice')">✍️ 标注练习</a>
+                <a class="sidebar-link" onclick="switchMode('correction')">🤖 AI批改</a>
+                <a class="sidebar-link" href="语料库式结构学作文.html">🔙 返回V1</a>
+            </div>
+            
+            <!-- 版权信息 -->
+            <div class="sidebar-footer">
+                <p>© 知兰玉数智能语言教育平台</p>
+                <p>📞 V2.0 结构化英语写作学习系统</p>
+                
+                <div class="footer-links">
+                    <a href="#">使用指南</a>
+                    <a href="#">标签说明</a>
+                    <a href="#">联系我们</a>
+                </div>
+                
+                <div class="sidebar-social">
+                    <a href="#" title="微信">💬</a>
+                    <a href="#" title="微博">📱</a>
+                    <a href="#" title="哔哩哔哩">📺</a>
+                </div>
+            </div>
+        </aside>
+        
+        <!-- 右侧新闻标签 -->
+        <div class="news-tab">V2</div>
+        <div class="news-tab-plus">+</div>
+        
+        <!-- 主内容区域 -->
+        <div class="main-content">
+            <!-- 页面标题 -->
+            <div class="page-header">
+                <h1>结构化英语写作学习系统 V2.0</h1>
+                <p>掌握12个功能标签 · AI导师一对一辅导 · 智能批改反馈</p>
+            </div>
+
+            <!-- 模式选择器 - 使用V1的product-tabs样式 -->
+            <div class="product-tabs" id="v2-mode-selector">
+                <div class="product-tab active" data-mode="beginner" onclick="switchMode('beginner')">
+                    📚 新手模式
+                </div>
+                <div class="product-tab" data-mode="practice" onclick="switchMode('practice')">
+                    ✍️ 练习模式
+                </div>
+                <div class="product-tab" data-mode="correction" onclick="switchMode('correction')">
+                    🤖 批改模式
+                </div>
+            </div>
+
+            <!-- 功能区域 - 使用V1的product-panel包装 -->
+            <div class="product-panel active" id="v2-panel">
+                <div class="feature-grid">
+                    <!-- 模式内容区 -->
+                    <div class="feature-card full-width" id="v2-mode-content">
+                        <!-- 动态内容由JS渲染 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="footer">
+        <div class="footer-inner">
+            <div class="footer-logo">
+                <span class="logo-title" style="font-size: 24px; color: rgba(255,255,255,0.9);">知兰玉数</span>
+            </div>
+            <p class="footer-text">
+                © 2024 知兰玉数智能语言教育平台 V2.0<br>
+                功能标签：IT · BG · CS · OI · PO · STA · EXP · EXA · CM · RES · SUM · LF
+            </p>
+        </div>
+    </footer>
+
+    <!-- 引入V2的JS -->
+    <script src="english-learning-v2.js"></script>
+    <script>
+        // 主题切换功能
+        function toggleTheme() {
+            const current = document.body.getAttribute('data-theme') || 'dark';
+            const next = current === 'dark' ? 'light' : 'dark';
+            applyTheme(next);
+        }
+        
+        function applyTheme(theme) {
+            document.body.setAttribute('data-theme', theme);
+            document.documentElement.setAttribute('data-theme', theme);
+            
+            // 更新按钮文字
+            const btn = document.getElementById('themeToggleBtn');
+            if (btn) {
+                btn.textContent = theme === 'dark' ? '🌙 深色' : '☀️ 浅色';
+            }
+            
+            localStorage.setItem('v2-theme', theme);
+        }
+        
+        // 页面加载时恢复主题
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedTheme = localStorage.getItem('v2-theme') || 'dark';
+            applyTheme(savedTheme);
+            
+            // 初始化V2系统
+            if (typeof initEnglishLearningV2 === 'function') {
+                initEnglishLearningV2();
+            }
+        });
+    </script>
+</body>
+</html>
